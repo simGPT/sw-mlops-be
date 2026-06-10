@@ -29,7 +29,11 @@ public class CustomerLogService {
   public void record(User user, Product product, EventType eventType) {
     customerLogRepository.save(
         CustomerLog.builder().user(user).product(product).eventType(eventType).build());
-    log.info("[행동 로그] userId: {}, productId: {}, eventType: {}", user.getId(), product.getId(), eventType);
+    log.info(
+        "[행동 로그] userId: {}, productId: {}, eventType: {}",
+        user.getId(),
+        product.getId(),
+        eventType);
   }
 
   @Transactional
