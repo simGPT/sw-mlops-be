@@ -20,39 +20,39 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 @RequiredArgsConstructor
 public class S3Service {
 
-    private final S3Client s3Client;
-    private final S3Properties s3Properties;
+  private final S3Client s3Client;
+  private final S3Properties s3Properties;
 
-    public String upload(MultipartFile file, String directory) throws IOException {
-        String fileName = directory + "/" + UUID.randomUUID() + "_" + file.getOriginalFilename();
+  public String upload(MultipartFile file, String directory) throws IOException {
+    String fileName = directory + "/" + UUID.randomUUID() + "_" + file.getOriginalFilename();
 
-        s3Client.putObject(
-                PutObjectRequest.builder()
-                        .bucket(s3Properties.getBucket())
-                        .key(fileName)
-                        .contentType(file.getContentType())
-                        .contentLength(file.getSize())
-                        .build(),
-                RequestBody.fromBytes(file.getBytes()));
+    s3Client.putObject(
+        PutObjectRequest.builder()
+            .bucket(s3Properties.getBucket())
+            .key(fileName)
+            .contentType(file.getContentType())
+            .contentLength(file.getSize())
+            .build(),
+        RequestBody.fromBytes(file.getBytes()));
 
-        String fileUrl =
-                "https://"
-                        + s3Properties.getBucket()
-                        + ".s3."
-                        + s3Properties.getRegion()
-                        + ".amazonaws.com/"
-                        + fileName;
+    String fileUrl =
+        "https://"
+            + s3Properties.getBucket()
+            + ".s3."
+            + s3Properties.getRegion()
+            + ".amazonaws.com/"
+            + fileName;
 
-        log.info("[S3] 업로드 완료 - url: {}", fileUrl);
-        return fileUrl;
-    }
+    log.info("[S3] 업로드 완료 - url: {}", fileUrl);
+    return fileUrl;
+  }
 
-    public void delete(String fileUrl) {
-        String key = fileUrl.substring(fileUrl.indexOf(".amazonaws.com/") + ".amazonaws.com/".length());
+  public void delete(String fileUrl) {
+    String key = fileUrl.substring(fileUrl.indexOf(".amazonaws.com/") + ".amazonaws.com/".length());
 
-        s3Client.deleteObject(
-                DeleteObjectRequest.builder().bucket(s3Properties.getBucket()).key(key).build());
+    s3Client.deleteObject(
+        DeleteObjectRequest.builder().bucket(s3Properties.getBucket()).key(key).build());
 
-        log.info("[S3] 삭제 완료 - key: {}", key);
-    }
+    log.info("[S3] 삭제 완료 - key: {}", key);
+  }
 }

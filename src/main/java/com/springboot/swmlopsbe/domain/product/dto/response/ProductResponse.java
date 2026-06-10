@@ -25,7 +25,9 @@ public class ProductResponse {
   @Schema(description = "재고", example = "50")
   private int stock;
 
-  @Schema(description = "상품 이미지 URL", example = "https://sw-mlops-bucket.s3.ap-northeast-2.amazonaws.com/products/image.jpg")
+  @Schema(
+      description = "상품 이미지 URL",
+      example = "https://sw-mlops-bucket.s3.ap-northeast-2.amazonaws.com/products/image.jpg")
   private String imageUrl;
 
   public static ProductResponse from(Product product) {

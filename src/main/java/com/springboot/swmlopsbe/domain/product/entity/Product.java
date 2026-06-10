@@ -36,8 +36,7 @@ public class Product extends BaseTimeEntity {
   @Column(nullable = false)
   private int stock;
 
-  @Column
-  private String imageUrl;
+  @Column private String imageUrl;
 
   @Builder
   public Product(String name, int price, int stock) {

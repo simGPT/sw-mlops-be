@@ -15,16 +15,16 @@ import software.amazon.awssdk.services.s3.S3Client;
 @RequiredArgsConstructor
 public class S3Config {
 
-    private final S3Properties s3Properties;
+  private final S3Properties s3Properties;
 
-    @Bean
-    public S3Client s3Client() {
-        return S3Client.builder()
-                .region(Region.of(s3Properties.getRegion()))
-                .credentialsProvider(
-                        StaticCredentialsProvider.create(
-                                AwsBasicCredentials.create(
-                                        s3Properties.getAccessKey(), s3Properties.getSecretKey())))
-                .build();
-    }
+  @Bean
+  public S3Client s3Client() {
+    return S3Client.builder()
+        .region(Region.of(s3Properties.getRegion()))
+        .credentialsProvider(
+            StaticCredentialsProvider.create(
+                AwsBasicCredentials.create(
+                    s3Properties.getAccessKey(), s3Properties.getSecretKey())))
+        .build();
+  }
 }

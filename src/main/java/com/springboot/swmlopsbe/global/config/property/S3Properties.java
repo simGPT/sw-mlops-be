@@ -12,8 +12,8 @@ import lombok.Setter;
 @ConfigurationProperties(prefix = "cloud.aws.s3")
 public class S3Properties {
 
-    private String bucket;
-    private String region;
-    private String accessKey;
-    private String secretKey;
+  private String bucket;
+  private String region;
+  private String accessKey;
+  private String secretKey;
 }
