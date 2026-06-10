@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.springboot.swmlopsbe.domain.cart.repository.CartItemRepository;
 import com.springboot.swmlopsbe.domain.order.dto.request.OrderRequest;
 import com.springboot.swmlopsbe.domain.order.dto.response.OrderResponse;
 import com.springboot.swmlopsbe.domain.order.entity.Order;
@@ -30,6 +31,7 @@ public class OrderService {
   private final OrderRepository orderRepository;
   private final OrderItemRepository orderItemRepository;
   private final ProductRepository productRepository;
+  private final CartItemRepository cartItemRepository;
 
   @Transactional
   public OrderResponse createOrder(User user, OrderRequest request) {
@@ -69,6 +71,7 @@ public class OrderService {
       item.getProduct().decreaseStock(item.getQuantity());
     }
 
+    cartItemRepository.deleteByUser(user); // 주문 생성 후에는 장바구니 비우기
     log.info("[주문 생성] 완료 - orderId: {}, totalPrice: {}", order.getId(), totalPrice);
     return OrderResponse.from(order);
   }
