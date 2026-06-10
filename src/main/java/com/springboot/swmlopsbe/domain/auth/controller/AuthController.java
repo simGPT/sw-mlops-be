@@ -1,5 +1,6 @@
 package com.springboot.swmlopsbe.domain.auth.controller;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 
 import org.springframework.http.HttpHeaders;
@@ -47,7 +48,6 @@ public class AuthController {
       @Valid @RequestBody LoginRequest request) {
     LoginResult result = authService.login(request);
 
-    // http는 쿠키를 헤더로 주고 받음
     return ResponseEntity.ok()
         .header(
             HttpHeaders.SET_COOKIE,
@@ -55,6 +55,36 @@ public class AuthController {
         .header(
             HttpHeaders.SET_COOKIE,
             jwtProvider.createRefreshTokenCookie(result.refreshToken()).toString())
-        .body(BaseResponse.success("로그인이 완료되었습니다.", result.response())); // 바디에 사용자 정보 담기
+        .body(BaseResponse.success("로그인이 완료되었습니다.", result.response()));
+  }
+
+  @PostMapping("/refresh")
+  @Operation(
+      summary = "[Refresh Token] 토큰 재발급",
+      description = "Refresh Token Cookie로 Access/Refresh Token을 재발급합니다.")
+  public ResponseEntity<BaseResponse<LoginResponse>> refresh(HttpServletRequest request) {
+    LoginResult result = authService.refresh(request);
+
+    return ResponseEntity.ok()
+        .header(
+            HttpHeaders.SET_COOKIE,
+            jwtProvider.createAccessTokenCookie(result.accessToken()).toString())
+        .header(
+            HttpHeaders.SET_COOKIE,
+            jwtProvider.createRefreshTokenCookie(result.refreshToken()).toString())
+        .body(BaseResponse.success("토큰이 재발급되었습니다.", result.response()));
+  }
+
+  @PostMapping("/logout")
+  @Operation(
+      summary = "[토큰 O] 로그아웃",
+      description = "로그아웃 API: Cookie를 만료시키고 Refresh Token을 DB에서 삭제합니다.")
+  public ResponseEntity<BaseResponse<Void>> logout(HttpServletRequest request) {
+    authService.logout(request);
+
+    return ResponseEntity.ok()
+        .header(HttpHeaders.SET_COOKIE, jwtProvider.clearAccessTokenCookie().toString())
+        .header(HttpHeaders.SET_COOKIE, jwtProvider.clearRefreshTokenCookie().toString())
+        .body(BaseResponse.success("로그아웃이 완료되었습니다.", null));
   }
 }

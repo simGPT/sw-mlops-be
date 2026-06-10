@@ -2,6 +2,8 @@ package com.springboot.swmlopsbe.domain.auth.service;
 
 import java.time.LocalDateTime;
 
+import jakarta.servlet.http.HttpServletRequest;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -18,6 +20,7 @@ import com.springboot.swmlopsbe.domain.user.entity.User;
 import com.springboot.swmlopsbe.domain.user.repository.UserRepository;
 import com.springboot.swmlopsbe.global.exception.CustomException;
 import com.springboot.swmlopsbe.global.security.jwt.JwtProvider;
+import com.springboot.swmlopsbe.global.security.jwt.TokenType;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -89,6 +92,68 @@ public class AuthService {
     log.info("[로그인] 완료 - username: {}, userId: {}", user.getUsername(), user.getId());
 
     return new LoginResult(accessToken, refreshToken, LoginResponse.from(user));
+  }
+
+  @Transactional
+  public LoginResult refresh(HttpServletRequest request) {
+    String refreshToken = jwtProvider.extractRefreshToken(request);
+
+    if (refreshToken == null) {
+      log.warn("[토큰 재발급] Refresh Token 없음");
+      throw new CustomException(AuthErrorCode.INVALID_REFRESH_TOKEN);
+    }
+
+    jwtProvider.validateToken(refreshToken, TokenType.REFRESH_TOKEN);
+
+    RefreshToken saved =
+        refreshTokenRepository
+            .findByToken(refreshToken)
+            .orElseThrow(
+                () -> {
+                  log.warn("[토큰 재발급] DB에 존재하지 않는 Refresh Token");
+                  return new CustomException(AuthErrorCode.INVALID_REFRESH_TOKEN);
+                });
+
+    if (saved.getExpiresAt().isBefore(LocalDateTime.now())) {
+      log.warn("[토큰 재발급] 만료된 Refresh Token - userId: {}", saved.getUser().getId());
+      refreshTokenRepository.delete(saved);
+      throw new CustomException(AuthErrorCode.EXPIRED_REFRESH_TOKEN);
+    }
+
+    User user = saved.getUser();
+    String newAccessToken = jwtProvider.generateAccessToken(user.getId(), user.getUsername());
+    String newRefreshToken = jwtProvider.generateRefreshToken(user.getId(), user.getUsername());
+
+    refreshTokenRepository.delete(saved);
+    refreshTokenRepository.save(
+        RefreshToken.builder()
+            .user(user)
+            .token(newRefreshToken)
+            .expiresAt(LocalDateTime.now().plusSeconds(refreshTokenValidityInSeconds))
+            .build());
+
+    log.info("[토큰 재발급] 완료 - username: {}, userId: {}", user.getUsername(), user.getId());
+
+    return new LoginResult(newAccessToken, newRefreshToken, LoginResponse.from(user));
+  }
+
+  @Transactional
+  public void logout(HttpServletRequest request) {
+    String accessToken = jwtProvider.extractAccessToken(request);
+
+    if (accessToken == null) {
+      log.warn("[로그아웃] Access Token 없음");
+      throw new CustomException(AuthErrorCode.INVALID_REFRESH_TOKEN);
+    }
+
+    String username = jwtProvider.getUsernameFromToken(accessToken);
+    User user =
+        userRepository
+            .findByUsername(username)
+            .orElseThrow(() -> new CustomException(AuthErrorCode.USER_NOT_FOUND));
+
+    refreshTokenRepository.deleteByUser(user);
+    log.info("[로그아웃] 완료 - username: {}, userId: {}", user.getUsername(), user.getId());
   }
 
   // login 함수에서 한번에 accessToken, refreshToken, response를 넘기기 위한 내부 데이터 운반용 Record
