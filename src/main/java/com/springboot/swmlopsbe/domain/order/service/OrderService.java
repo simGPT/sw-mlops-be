@@ -6,6 +6,9 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.springboot.swmlopsbe.domain.cart.repository.CartItemRepository;
+import com.springboot.swmlopsbe.domain.log.entity.EventType;
+import com.springboot.swmlopsbe.domain.log.service.CustomerLogService;
 import com.springboot.swmlopsbe.domain.order.dto.request.OrderRequest;
 import com.springboot.swmlopsbe.domain.order.dto.response.OrderResponse;
 import com.springboot.swmlopsbe.domain.order.entity.Order;
@@ -30,6 +33,8 @@ public class OrderService {
   private final OrderRepository orderRepository;
   private final OrderItemRepository orderItemRepository;
   private final ProductRepository productRepository;
+  private final CartItemRepository cartItemRepository;
+  private final CustomerLogService customerLogService;
 
   @Transactional
   public OrderResponse createOrder(User user, OrderRequest request) {
@@ -64,11 +69,13 @@ public class OrderService {
       totalPrice += product.getPrice() * itemRequest.getQuantity();
     }
 
-    // 재고 차감은 모든 항목 유효성 검증 후 일괄 처리
+    // 재고 차감 및 구매 로그는 모든 항목 유효성 검증 후 일괄 처리
     for (OrderItem item : order.getOrderItems()) {
       item.getProduct().decreaseStock(item.getQuantity());
+      customerLogService.record(user, item.getProduct(), EventType.PURCHASE);
     }
 
+    cartItemRepository.deleteByUser(user); // 주문 생성 후에는 장바구니 비우기
     log.info("[주문 생성] 완료 - orderId: {}, totalPrice: {}", order.getId(), totalPrice);
     return OrderResponse.from(order);
   }
@@ -120,6 +127,7 @@ public class OrderService {
     }
 
     orderItem.returnItem();
+    customerLogService.record(user, orderItem.getProduct(), EventType.RETURN);
     log.info("[반품 처리] 완료 - itemId: {}", itemId);
 
     return OrderResponse.from(order);
