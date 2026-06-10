@@ -11,6 +11,8 @@ import com.springboot.swmlopsbe.domain.cart.dto.response.CartResponse;
 import com.springboot.swmlopsbe.domain.cart.entity.CartItem;
 import com.springboot.swmlopsbe.domain.cart.exception.CartErrorCode;
 import com.springboot.swmlopsbe.domain.cart.repository.CartItemRepository;
+import com.springboot.swmlopsbe.domain.log.entity.EventType;
+import com.springboot.swmlopsbe.domain.log.service.CustomerLogService;
 import com.springboot.swmlopsbe.domain.product.entity.Product;
 import com.springboot.swmlopsbe.domain.product.exception.ProductErrorCode;
 import com.springboot.swmlopsbe.domain.product.repository.ProductRepository;
@@ -27,6 +29,7 @@ public class CartService {
 
   private final CartItemRepository cartItemRepository;
   private final ProductRepository productRepository;
+  private final CustomerLogService customerLogService;
 
   @Transactional
   public CartResponse addItem(User user, CartAddRequest request) {
@@ -55,6 +58,7 @@ public class CartService {
               log.info("[장바구니 추가] 신규 항목 저장 - productId: {}", product.getId());
             });
 
+    customerLogService.record(user, product, EventType.ADD_TO_CART);
     return CartResponse.from(cartItemRepository.findAllByUser(user));
   }
 
