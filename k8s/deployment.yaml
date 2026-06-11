@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sw-mlops-be
+  namespace: shopping
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: sw-mlops-be
+  template:
+    metadata:
+      labels:
+        app: sw-mlops-be
+    spec:
+      containers:
+        - name: app
+          image: sw-mlops-be:latest
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - secretRef:
+                name: sw-mlops-be-secret
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
+          startupProbe:
+            tcpSocket:
+              port: 8080
+            failureThreshold: 30
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 0
+            periodSeconds: 10
+          readinessProbe:
+            tcpSocket:
+              port: 8080
+            initialDelaySeconds: 0
+            periodSeconds: 5
