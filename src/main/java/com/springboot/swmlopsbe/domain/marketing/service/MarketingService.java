@@ -10,7 +10,7 @@ import com.springboot.swmlopsbe.domain.prediction.service.PredictionService;
 import com.springboot.swmlopsbe.domain.user.entity.User;
 import com.springboot.swmlopsbe.domain.user.repository.UserRepository;
 import com.springboot.swmlopsbe.global.exception.CustomException;
-import com.springboot.swmlopsbe.global.service.EmailService;
+import com.springboot.swmlopsbe.domain.marketing.service.EmailService;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
