@@ -21,6 +21,7 @@ public class ModelChurnResponse {
   @Getter
   @Setter
   @NoArgsConstructor
+  @JsonIgnoreProperties(ignoreUnknown = true)
   @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
   public static class ChurnResult {
     private int predictedClass;
@@ -32,6 +33,7 @@ public class ModelChurnResponse {
   @Getter
   @Setter
   @NoArgsConstructor
+  @JsonIgnoreProperties(ignoreUnknown = true)
   @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
   public static class Probabilities {
     private double retained;
