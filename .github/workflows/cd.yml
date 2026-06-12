@@ -4,49 +4,26 @@ on:
   push:
     branches: [main]
 
-env:
-  IMAGE_NAME: sw-mlops-be
-  AWS_REGION: ap-northeast-2
-
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Build and push Docker image
-        id: build
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ github.sha }}
-        run: |
-          docker build -t $ECR_REGISTRY/$IMAGE_NAME:$IMAGE_TAG .
-          docker tag  $ECR_REGISTRY/$IMAGE_NAME:$IMAGE_TAG $ECR_REGISTRY/$IMAGE_NAME:latest
-          docker push $ECR_REGISTRY/$IMAGE_NAME:$IMAGE_TAG
-          docker push $ECR_REGISTRY/$IMAGE_NAME:latest
-
       - name: Deploy to k3s
         env:
-          KUBECONFIG_B64: ${{ secrets.KUBECONFIG_PRODUCTION }}
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ github.sha }}
+          KUBECONFIG_PRODUCTION: ${{ secrets.KUBECONFIG_PRODUCTION }}
         run: |
-          echo "$KUBECONFIG_B64" | base64 -d > /tmp/kubeconfig
+          echo "$KUBECONFIG_PRODUCTION" | base64 -d > /tmp/kubeconfig
           export KUBECONFIG=/tmp/kubeconfig
 
-          kubectl set image deployment/sw-mlops-be app=$ECR_REGISTRY/$IMAGE_NAME:$IMAGE_TAG \
-            -n shopping
+          kubectl apply -f k8s/namespace.yaml
+          kubectl apply -f k8s/shopping-db.yaml
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/service.yaml
+          kubectl apply -f k8s/ingress.yaml
+
+          kubectl rollout restart deployment/sw-mlops-be -n shopping
           kubectl rollout status deployment/sw-mlops-be -n shopping --timeout=120s
 
           rm -f /tmp/kubeconfig
