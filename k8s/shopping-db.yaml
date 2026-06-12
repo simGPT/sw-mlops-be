@@ -1,0 +1,55 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: shopping-db
+  namespace: shopping
+spec:
+  serviceName: shopping-db
+  replicas: 1
+  selector:
+    matchLabels:
+      app: shopping-db
+  template:
+    metadata:
+      labels:
+        app: shopping-db
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16-alpine
+          ports:
+            - containerPort: 5432
+          envFrom:
+            - secretRef:
+                name: shopping-db-secret
+          volumeMounts:
+            - name: postgres-data
+              mountPath: /var/lib/postgresql/data
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+  volumeClaimTemplates:
+    - metadata:
+        name: postgres-data
+      spec:
+        accessModes: [ReadWriteOnce]
+        storageClassName: local-path
+        resources:
+          requests:
+            storage: 5Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: shopping-db
+  namespace: shopping
+spec:
+  selector:
+    app: shopping-db
+  ports:
+    - port: 5432
+      targetPort: 5432

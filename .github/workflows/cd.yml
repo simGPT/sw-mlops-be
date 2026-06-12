@@ -1,0 +1,29 @@
+name: CD
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Deploy to k3s
+        env:
+          KUBECONFIG_PRODUCTION: ${{ secrets.KUBECONFIG_PRODUCTION }}
+        run: |
+          echo "$KUBECONFIG_PRODUCTION" | base64 -d > /tmp/kubeconfig
+          export KUBECONFIG=/tmp/kubeconfig
+
+          kubectl apply -f k8s/namespace.yaml
+          kubectl apply -f k8s/shopping-db.yaml
+          kubectl apply -f k8s/deployment.yaml
+          kubectl apply -f k8s/service.yaml
+          kubectl apply -f k8s/ingress.yaml
+
+          kubectl rollout restart deployment/sw-mlops-be -n shopping
+          kubectl rollout status deployment/sw-mlops-be -n shopping --timeout=120s
+
+          rm -f /tmp/kubeconfig

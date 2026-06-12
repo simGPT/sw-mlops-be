@@ -1,0 +1,9 @@
+.git
+.github
+.idea
+*.iml
+build/
+out/
+.gradle/
+k8s/
+*.md
