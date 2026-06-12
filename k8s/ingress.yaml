@@ -1,0 +1,24 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: sw-mlops-be
+  namespace: shopping
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts:
+        - api.swmlops.site
+      secretName: sw-mlops-be-tls
+  rules:
+    - host: api.swmlops.site
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: sw-mlops-be
+                port:
+                  number: 8080
