@@ -15,6 +15,9 @@ public enum AuthErrorCode implements BaseErrorCode {
   @Schema(description = "이미 사용 중인 아이디")
   DUPLICATE_USERNAME("A001", "이미 사용 중인 아이디입니다.", HttpStatus.CONFLICT),
 
+  @Schema(description = "이미 사용 중인 이메일")
+  DUPLICATE_EMAIL("A006", "이미 사용 중인 이메일입니다.", HttpStatus.CONFLICT),
+
   @Schema(description = "존재하지 않는 사용자")
   USER_NOT_FOUND("A002", "존재하지 않는 사용자입니다.", HttpStatus.NOT_FOUND),
 

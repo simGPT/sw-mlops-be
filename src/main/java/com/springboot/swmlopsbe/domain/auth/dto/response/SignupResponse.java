@@ -22,11 +22,15 @@ public class SignupResponse {
   @Schema(description = "사용자 이름", example = "심서현")
   private String name;
 
+  @Schema(description = "이메일", example = "simgpt@example.com")
+  private String email;
+
   public static SignupResponse from(User user) {
     return SignupResponse.builder()
         .userId(user.getId())
         .username(user.getUsername())
         .name(user.getName())
+        .email(user.getEmail())
         .build();
   }
 }

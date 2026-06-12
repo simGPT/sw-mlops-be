@@ -47,11 +47,17 @@ public class AuthService {
       throw new CustomException(AuthErrorCode.DUPLICATE_USERNAME);
     }
 
+    if (userRepository.existsByEmail(request.getEmail())) {
+      log.warn("[회원가입] 중복 이메일 - email: {}", request.getEmail());
+      throw new CustomException(AuthErrorCode.DUPLICATE_EMAIL);
+    }
+
     User user =
         User.builder()
             .username(request.getUsername())
             .password(passwordEncoder.encode(request.getPassword()))
             .name(request.getName())
+            .email(request.getEmail())
             .build();
 
     userRepository.save(user);
