@@ -4,7 +4,7 @@ metadata:
   name: sw-mlops-be
   namespace: shopping
   annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
+    cert-manager.io/cluster-issuer: swmlops-issuer
 spec:
   ingressClassName: traefik
   tls:
