@@ -164,7 +164,7 @@ public class PredictionService {
     ModelUpliftResponse response =
         callModelApi(
             new UpliftPredictRequest(features),
-            "/uplift/predict",
+            "/uplift_predict",
             ModelUpliftResponse.class,
             PredictionErrorCode.UPLIFT_API_ERROR);
 
