@@ -12,7 +12,7 @@ import com.springboot.swmlopsbe.domain.user.entity.User;
 
 public interface CustomerLogRepository extends JpaRepository<CustomerLog, Long> {
 
-    // 사용자 행동 로그 개수
+  // 사용자 행동 로그 개수
   @Query(
       "SELECT COUNT(l) FROM CustomerLog l WHERE l.user = :user AND l.eventType = :eventType AND l.createdAt >= :since")
   long countByUserAndEventTypeAndCreatedAtAfter(

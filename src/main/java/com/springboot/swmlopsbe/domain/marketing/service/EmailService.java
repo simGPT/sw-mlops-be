@@ -36,8 +36,7 @@ public class EmailService {
                               .subject(Content.builder().data(subject).charset("UTF-8").build())
                               .body(
                                   Body.builder()
-                                      .text(
-                                          Content.builder().data(body).charset("UTF-8").build())
+                                      .text(Content.builder().data(body).charset("UTF-8").build())
                                       .build())
                               .build())
                       .build())
