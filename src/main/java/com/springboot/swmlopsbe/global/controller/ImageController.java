@@ -10,7 +10,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.springboot.swmlopsbe.global.service.S3Service;
 
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/images")
 @RequiredArgsConstructor
@@ -20,6 +22,7 @@ public class ImageController {
 
   @GetMapping
   public ResponseEntity<byte[]> getImage(@RequestParam String key) {
+    log.info("[이미지 프록시] key: '{}'", key);
     byte[] bytes = s3Service.downloadAsBytes(key);
 
     MediaType mediaType = MediaType.IMAGE_JPEG;
