@@ -3,87 +3,67 @@ package com.springboot.swmlopsbe.global.service;
 import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.springboot.swmlopsbe.global.config.property.S3Properties;
 import com.springboot.swmlopsbe.global.exception.CustomException;
 import com.springboot.swmlopsbe.global.exception.GlobalErrorCode;
 
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import software.amazon.awssdk.core.ResponseBytes;
-import software.amazon.awssdk.core.sync.RequestBody;
-import software.amazon.awssdk.services.s3.S3Client;
-import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectRequest;
-import software.amazon.awssdk.services.s3.model.GetObjectResponse;
-import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
-import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 @Slf4j
 @Service
-@RequiredArgsConstructor
 public class S3Service {
-
-  private final S3Client s3Client;
-  private final S3Properties s3Properties;
 
   @Value("${app.base-url}")
   private String baseUrl;
 
+  @Value("${app.uploads-dir:uploads}")
+  private String uploadsDir;
+
   public String upload(MultipartFile file, String directory) throws IOException {
-    String fileName = directory + "/" + UUID.randomUUID() + "_" + file.getOriginalFilename();
-
-    s3Client.putObject(
-        PutObjectRequest.builder()
-            .bucket(s3Properties.getBucket())
-            .key(fileName)
-            .contentType(file.getContentType())
-            .contentLength(file.getSize())
-            .build(),
-        RequestBody.fromBytes(file.getBytes()));
-
-    String fileUrl =
-        "https://"
-            + s3Properties.getBucket()
-            + ".s3."
-            + s3Properties.getRegion()
-            + ".amazonaws.com/"
-            + fileName;
-
-    log.info("[S3] 업로드 완료 - url: {}", fileUrl);
-    return fileUrl;
+    String fileName = UUID.randomUUID() + "_" + file.getOriginalFilename();
+    Path targetDir = Paths.get(uploadsDir, directory);
+    Files.createDirectories(targetDir);
+    Files.write(targetDir.resolve(fileName), file.getBytes());
+    String relativePath = directory + "/" + fileName;
+    log.info("[Local] 업로드 완료 - path: {}", relativePath);
+    return relativePath;
   }
 
-  public void delete(String fileUrl) {
-    String key = fileUrl.substring(fileUrl.indexOf(".amazonaws.com/") + ".amazonaws.com/".length());
-
-    s3Client.deleteObject(
-        DeleteObjectRequest.builder().bucket(s3Properties.getBucket()).key(key).build());
-
-    log.info("[S3] 삭제 완료 - key: {}", key);
+  public void delete(String relativePath) {
+    if (relativePath == null || relativePath.startsWith("https://")) return;
+    try {
+      Files.deleteIfExists(Paths.get(uploadsDir, relativePath));
+      log.info("[Local] 삭제 완료 - path: {}", relativePath);
+    } catch (IOException e) {
+      log.warn("[Local] 삭제 실패 - path: {}", relativePath);
+    }
   }
 
-  public String generatePresignedUrl(String s3Url) {
-    if (s3Url == null) return null;
-    String key = s3Url.substring(s3Url.indexOf(".amazonaws.com/") + ".amazonaws.com/".length());
-    String encodedKey = URLEncoder.encode(key, StandardCharsets.UTF_8).replace("+", "%20");
+  public String generatePresignedUrl(String imageUrl) {
+    if (imageUrl == null || imageUrl.startsWith("https://")) return null;
+    if (imageUrl.startsWith("/images/")) {
+      String filename = imageUrl.substring("/images/".length());
+      String encodedFilename = URLEncoder.encode(filename, StandardCharsets.UTF_8).replace("+", "%20");
+      return baseUrl + "/images/" + encodedFilename;
+    }
+    String encodedKey = URLEncoder.encode(imageUrl, StandardCharsets.UTF_8).replace("+", "%20");
     return baseUrl + "/api/images?key=" + encodedKey;
   }
 
   public byte[] downloadAsBytes(String key) {
-    log.info("[S3] 다운로드 시도 - bucket: {}, key: '{}'", s3Properties.getBucket(), key);
+    log.info("[Local] 파일 읽기 - key: '{}'", key);
     try {
-      ResponseBytes<GetObjectResponse> response =
-          s3Client.getObjectAsBytes(
-              GetObjectRequest.builder().bucket(s3Properties.getBucket()).key(key).build());
-      return response.asByteArray();
-    } catch (NoSuchKeyException e) {
-      log.warn("[S3] 파일 없음 - key: '{}'", key);
+      return Files.readAllBytes(Paths.get(uploadsDir, key));
+    } catch (IOException e) {
+      log.warn("[Local] 파일 없음 - key: '{}'", key);
       throw new CustomException(GlobalErrorCode.RESOURCE_NOT_FOUND);
     }
   }
