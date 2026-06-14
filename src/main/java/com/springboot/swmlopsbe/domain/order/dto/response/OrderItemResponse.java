@@ -28,6 +28,9 @@ public class OrderItemResponse {
   @Schema(description = "주문 당시 가격", example = "9500")
   private int price;
 
+  @Schema(description = "상품 이미지 URL", example = "https://...")
+  private String imageUrl;
+
   @Schema(description = "반품 여부", example = "false")
   private boolean isReturned;
 
@@ -38,6 +41,7 @@ public class OrderItemResponse {
         .productName(item.getProduct().getName())
         .quantity(item.getQuantity())
         .price(item.getPrice())
+        .imageUrl(item.getImageUrl())
         .isReturned(item.isReturned())
         .build();
   }
