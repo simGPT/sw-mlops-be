@@ -62,6 +62,7 @@ public class OrderService {
               .product(product)
               .quantity(itemRequest.getQuantity())
               .price(product.getPrice())
+              .imageUrl(product.getImageUrl())
               .build();
 
       orderItemRepository.save(orderItem);
@@ -75,6 +76,7 @@ public class OrderService {
       customerLogService.record(user, item.getProduct(), EventType.PURCHASE);
     }
 
+    order.updateTotalPrice(totalPrice);
     cartItemRepository.deleteByUser(user); // 주문 생성 후에는 장바구니 비우기
     log.info("[주문 생성] 완료 - orderId: {}, totalPrice: {}", order.getId(), totalPrice);
     return OrderResponse.from(order);

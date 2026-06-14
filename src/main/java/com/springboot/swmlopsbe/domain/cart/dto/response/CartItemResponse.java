@@ -28,6 +28,9 @@ public class CartItemResponse {
   @Schema(description = "수량", example = "2")
   private int quantity;
 
+  @Schema(description = "상품 이미지 URL", example = "https://...")
+  private String imageUrl;
+
   @Schema(description = "소계 (단가 × 수량)", example = "98000")
   private int subtotal;
 
@@ -38,6 +41,7 @@ public class CartItemResponse {
         .productName(cartItem.getProduct().getName())
         .price(cartItem.getProduct().getPrice())
         .quantity(cartItem.getQuantity())
+        .imageUrl(cartItem.getProduct().getImageUrl())
         .subtotal(cartItem.getProduct().getPrice() * cartItem.getQuantity())
         .build();
   }

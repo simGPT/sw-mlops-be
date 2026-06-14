@@ -39,10 +39,11 @@ public class Product extends BaseTimeEntity {
   @Column private String imageUrl;
 
   @Builder
-  public Product(String name, int price, int stock) {
+  public Product(String name, int price, int stock, String imageUrl) {
     this.name = name;
     this.price = price;
     this.stock = stock;
+    this.imageUrl = imageUrl;
   }
 
   public void updateImageUrl(String imageUrl) {

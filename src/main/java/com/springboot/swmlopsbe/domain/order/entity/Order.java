@@ -58,4 +58,8 @@ public class Order extends BaseTimeEntity {
   public void addOrderItem(OrderItem orderItem) {
     orderItems.add(orderItem);
   }
+
+  public void updateTotalPrice(int totalPrice) {
+    this.totalPrice = totalPrice;
+  }
 }
