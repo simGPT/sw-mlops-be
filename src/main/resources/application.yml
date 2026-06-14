@@ -20,7 +20,7 @@ jwt:
   access-token-validity-in-seconds: 3600
   refresh-token-validity-in-seconds: 604800
   secure: ${COOKIE_SECURE:false}
-  same-site: Strict
+  same-site: None
 
 cloud:
   aws:
