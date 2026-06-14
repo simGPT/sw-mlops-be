@@ -18,6 +18,7 @@ import com.springboot.swmlopsbe.domain.product.exception.ProductErrorCode;
 import com.springboot.swmlopsbe.domain.product.repository.ProductRepository;
 import com.springboot.swmlopsbe.domain.user.entity.User;
 import com.springboot.swmlopsbe.global.exception.CustomException;
+import com.springboot.swmlopsbe.global.service.S3Service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,6 +31,7 @@ public class CartService {
   private final CartItemRepository cartItemRepository;
   private final ProductRepository productRepository;
   private final CustomerLogService customerLogService;
+  private final S3Service s3Service;
 
   @Transactional
   public CartResponse addItem(User user, CartAddRequest request) {
@@ -59,14 +61,15 @@ public class CartService {
             });
 
     customerLogService.record(user, product, EventType.ADD_TO_CART);
-    return CartResponse.from(cartItemRepository.findAllByUser(user));
+    return CartResponse.from(
+        cartItemRepository.findAllByUser(user), s3Service::generatePresignedUrl);
   }
 
   @Transactional(readOnly = true)
   public CartResponse getCart(User user) {
     log.info("[장바구니 조회] 요청 - userId: {}", user.getId());
     List<CartItem> items = cartItemRepository.findAllByUser(user);
-    return CartResponse.from(items);
+    return CartResponse.from(items, s3Service::generatePresignedUrl);
   }
 
   @Transactional
@@ -81,7 +84,8 @@ public class CartService {
     cartItem.updateQuantity(request.getQuantity());
     log.info("[장바구니 수량 변경] 완료 - itemId: {}, quantity: {}", itemId, request.getQuantity());
 
-    return CartResponse.from(cartItemRepository.findAllByUser(user));
+    return CartResponse.from(
+        cartItemRepository.findAllByUser(user), s3Service::generatePresignedUrl);
   }
 
   @Transactional
@@ -96,7 +100,8 @@ public class CartService {
     cartItemRepository.delete(cartItem);
     log.info("[장바구니 삭제] 완료 - itemId: {}", itemId);
 
-    return CartResponse.from(cartItemRepository.findAllByUser(user));
+    return CartResponse.from(
+        cartItemRepository.findAllByUser(user), s3Service::generatePresignedUrl);
   }
 
   @Transactional
