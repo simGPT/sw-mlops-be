@@ -10,6 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.springboot.swmlopsbe.global.config.property.S3Properties;
+import com.springboot.swmlopsbe.global.exception.CustomException;
+import com.springboot.swmlopsbe.global.exception.GlobalErrorCode;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -19,6 +21,7 @@ import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.GetObjectResponse;
+import software.amazon.awssdk.services.s3.model.NoSuchKeyException;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 
 @Slf4j
@@ -68,13 +71,20 @@ public class S3Service {
   public String generatePresignedUrl(String s3Url) {
     if (s3Url == null) return null;
     String key = s3Url.substring(s3Url.indexOf(".amazonaws.com/") + ".amazonaws.com/".length());
-    return baseUrl + "/api/images?key=" + URLEncoder.encode(key, StandardCharsets.UTF_8);
+    String encodedKey = URLEncoder.encode(key, StandardCharsets.UTF_8).replace("+", "%20");
+    return baseUrl + "/api/images?key=" + encodedKey;
   }
 
   public byte[] downloadAsBytes(String key) {
-    ResponseBytes<GetObjectResponse> response =
-        s3Client.getObjectAsBytes(
-            GetObjectRequest.builder().bucket(s3Properties.getBucket()).key(key).build());
-    return response.asByteArray();
+    log.info("[S3] 다운로드 시도 - bucket: {}, key: '{}'", s3Properties.getBucket(), key);
+    try {
+      ResponseBytes<GetObjectResponse> response =
+          s3Client.getObjectAsBytes(
+              GetObjectRequest.builder().bucket(s3Properties.getBucket()).key(key).build());
+      return response.asByteArray();
+    } catch (NoSuchKeyException e) {
+      log.warn("[S3] 파일 없음 - key: '{}'", key);
+      throw new CustomException(GlobalErrorCode.RESOURCE_NOT_FOUND);
+    }
   }
 }
