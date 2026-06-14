@@ -42,15 +42,18 @@ public class OrderItem extends BaseTimeEntity {
   @Column(nullable = false)
   private int price;
 
+  @Column private String imageUrl;
+
   @Column(nullable = false)
   private boolean isReturned;
 
   @Builder
-  public OrderItem(Order order, Product product, int quantity, int price) {
+  public OrderItem(Order order, Product product, int quantity, int price, String imageUrl) {
     this.order = order;
     this.product = product;
     this.quantity = quantity;
     this.price = price;
+    this.imageUrl = imageUrl;
     this.isReturned = false;
   }
 
