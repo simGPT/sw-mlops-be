@@ -1,6 +1,7 @@
 package com.springboot.swmlopsbe.global.service;
 
 import java.io.IOException;
+import java.time.Duration;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
@@ -13,7 +14,10 @@ import lombok.extern.slf4j.Slf4j;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
+import software.amazon.awssdk.services.s3.presigner.S3Presigner;
+import software.amazon.awssdk.services.s3.presigner.model.GetObjectPresignRequest;
 
 @Slf4j
 @Service
@@ -21,6 +25,7 @@ import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 public class S3Service {
 
   private final S3Client s3Client;
+  private final S3Presigner s3Presigner;
   private final S3Properties s3Properties;
 
   public String upload(MultipartFile file, String directory) throws IOException {
@@ -54,5 +59,19 @@ public class S3Service {
         DeleteObjectRequest.builder().bucket(s3Properties.getBucket()).key(key).build());
 
     log.info("[S3] 삭제 완료 - key: {}", key);
+  }
+
+  public String generatePresignedUrl(String s3Url) {
+    if (s3Url == null) return null;
+    String key = s3Url.substring(s3Url.indexOf(".amazonaws.com/") + ".amazonaws.com/".length());
+
+    GetObjectPresignRequest presignRequest =
+        GetObjectPresignRequest.builder()
+            .signatureDuration(Duration.ofHours(1))
+            .getObjectRequest(
+                GetObjectRequest.builder().bucket(s3Properties.getBucket()).key(key).build())
+            .build();
+
+    return s3Presigner.presignGetObject(presignRequest).url().toString();
   }
 }

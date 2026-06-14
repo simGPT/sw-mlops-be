@@ -31,12 +31,16 @@ public class ProductResponse {
   private String imageUrl;
 
   public static ProductResponse from(Product product) {
+    return from(product, product.getImageUrl());
+  }
+
+  public static ProductResponse from(Product product, String imageUrl) {
     return ProductResponse.builder()
         .id(product.getId())
         .name(product.getName())
         .price(product.getPrice())
         .stock(product.getStock())
-        .imageUrl(product.getImageUrl())
+        .imageUrl(imageUrl)
         .build();
   }
 }

@@ -3,6 +3,7 @@ package com.springboot.swmlopsbe.domain.order.dto.response;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Function;
 
 import com.springboot.swmlopsbe.domain.order.entity.Order;
 
@@ -30,13 +31,16 @@ public class OrderResponse {
   @Schema(description = "주문 항목 목록")
   private List<OrderItemResponse> items;
 
-  public static OrderResponse from(Order order) {
+  public static OrderResponse from(Order order, Function<String, String> urlTransformer) {
     return OrderResponse.builder()
         .orderId(order.getId())
         .totalPrice(order.getTotalPrice())
         .discountAmount(order.getDiscountAmount())
         .createdAt(order.getCreatedAt())
-        .items(order.getOrderItems().stream().map(OrderItemResponse::from).toList())
+        .items(
+            order.getOrderItems().stream()
+                .map(item -> OrderItemResponse.from(item, urlTransformer.apply(item.getImageUrl())))
+                .toList())
         .build();
   }
 }

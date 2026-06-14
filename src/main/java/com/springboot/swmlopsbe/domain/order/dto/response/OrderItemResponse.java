@@ -35,13 +35,17 @@ public class OrderItemResponse {
   private boolean isReturned;
 
   public static OrderItemResponse from(OrderItem item) {
+    return from(item, item.getImageUrl());
+  }
+
+  public static OrderItemResponse from(OrderItem item, String imageUrl) {
     return OrderItemResponse.builder()
         .itemId(item.getId())
         .productId(item.getProduct().getId())
         .productName(item.getProduct().getName())
         .quantity(item.getQuantity())
         .price(item.getPrice())
-        .imageUrl(item.getImageUrl())
+        .imageUrl(imageUrl)
         .isReturned(item.isReturned())
         .build();
   }

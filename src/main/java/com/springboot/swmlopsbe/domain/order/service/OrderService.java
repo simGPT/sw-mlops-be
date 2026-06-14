@@ -21,6 +21,7 @@ import com.springboot.swmlopsbe.domain.product.exception.ProductErrorCode;
 import com.springboot.swmlopsbe.domain.product.repository.ProductRepository;
 import com.springboot.swmlopsbe.domain.user.entity.User;
 import com.springboot.swmlopsbe.global.exception.CustomException;
+import com.springboot.swmlopsbe.global.service.S3Service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,6 +36,7 @@ public class OrderService {
   private final ProductRepository productRepository;
   private final CartItemRepository cartItemRepository;
   private final CustomerLogService customerLogService;
+  private final S3Service s3Service;
 
   @Transactional
   public OrderResponse createOrder(User user, OrderRequest request) {
@@ -79,14 +81,14 @@ public class OrderService {
     order.updateTotalPrice(totalPrice);
     cartItemRepository.deleteByUser(user); // 주문 생성 후에는 장바구니 비우기
     log.info("[주문 생성] 완료 - orderId: {}, totalPrice: {}", order.getId(), totalPrice);
-    return OrderResponse.from(order);
+    return OrderResponse.from(order, s3Service::generatePresignedUrl);
   }
 
   @Transactional(readOnly = true)
   public List<OrderResponse> getOrders(User user) {
     log.info("[주문 목록 조회] 요청 - userId: {}", user.getId());
     return orderRepository.findByUserOrderByCreatedAtDesc(user).stream()
-        .map(OrderResponse::from)
+        .map(order -> OrderResponse.from(order, s3Service::generatePresignedUrl))
         .toList();
   }
 
@@ -103,7 +105,7 @@ public class OrderService {
       throw new CustomException(OrderErrorCode.ORDER_FORBIDDEN);
     }
 
-    return OrderResponse.from(order);
+    return OrderResponse.from(order, s3Service::generatePresignedUrl);
   }
 
   @Transactional
@@ -132,6 +134,6 @@ public class OrderService {
     customerLogService.record(user, orderItem.getProduct(), EventType.RETURN);
     log.info("[반품 처리] 완료 - itemId: {}", itemId);
 
-    return OrderResponse.from(order);
+    return OrderResponse.from(order, s3Service::generatePresignedUrl);
   }
 }
