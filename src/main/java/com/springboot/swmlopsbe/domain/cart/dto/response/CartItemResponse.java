@@ -35,13 +35,17 @@ public class CartItemResponse {
   private int subtotal;
 
   public static CartItemResponse from(CartItem cartItem) {
+    return from(cartItem, cartItem.getProduct().getImageUrl());
+  }
+
+  public static CartItemResponse from(CartItem cartItem, String imageUrl) {
     return CartItemResponse.builder()
         .itemId(cartItem.getId())
         .productId(cartItem.getProduct().getId())
         .productName(cartItem.getProduct().getName())
         .price(cartItem.getProduct().getPrice())
         .quantity(cartItem.getQuantity())
-        .imageUrl(cartItem.getProduct().getImageUrl())
+        .imageUrl(imageUrl)
         .subtotal(cartItem.getProduct().getPrice() * cartItem.getQuantity())
         .build();
   }

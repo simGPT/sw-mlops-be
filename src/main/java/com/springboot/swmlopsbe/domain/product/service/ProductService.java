@@ -30,20 +30,23 @@ public class ProductService {
   @Transactional(readOnly = true)
   public List<ProductResponse> getProducts() {
     log.info("[상품 목록 조회] 요청");
-    return productRepository.findAll().stream().map(ProductResponse::from).toList();
+    return productRepository.findAll().stream()
+        .map(p -> ProductResponse.from(p, s3Service.generatePresignedUrl(p.getImageUrl())))
+        .toList();
   }
 
   @Transactional(readOnly = true)
   public ProductResponse getProduct(UUID productId) {
     log.info("[상품 상세 조회] 요청 - productId: {}", productId);
-    return productRepository
-        .findById(productId)
-        .map(ProductResponse::from)
-        .orElseThrow(
-            () -> {
-              log.warn("[상품 상세 조회] 존재하지 않는 상품 - productId: {}", productId);
-              return new CustomException(ProductErrorCode.PRODUCT_NOT_FOUND);
-            });
+    Product product =
+        productRepository
+            .findById(productId)
+            .orElseThrow(
+                () -> {
+                  log.warn("[상품 상세 조회] 존재하지 않는 상품 - productId: {}", productId);
+                  return new CustomException(ProductErrorCode.PRODUCT_NOT_FOUND);
+                });
+    return ProductResponse.from(product, s3Service.generatePresignedUrl(product.getImageUrl()));
   }
 
   @Transactional
@@ -63,7 +66,7 @@ public class ProductService {
       String imageUrl = s3Service.upload(file, "products");
       product.updateImageUrl(imageUrl);
       log.info("[상품 이미지 업로드] 완료 - productId: {}, url: {}", productId, imageUrl);
-      return ProductResponse.from(product);
+      return ProductResponse.from(product, s3Service.generatePresignedUrl(imageUrl));
     } catch (IOException e) {
       log.error("[상품 이미지 업로드] 실패 - productId: {}", productId, e);
       throw new CustomException(GlobalErrorCode.INTERNAL_SERVER_ERROR);
