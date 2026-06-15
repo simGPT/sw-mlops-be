@@ -5,7 +5,9 @@ import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
+import com.springboot.swmlopsbe.domain.abtest.service.AbTestService;
 import com.springboot.swmlopsbe.domain.auth.exception.AuthErrorCode;
+import com.springboot.swmlopsbe.domain.prediction.dto.request.FeatureRequest;
 import com.springboot.swmlopsbe.domain.prediction.service.PredictionService;
 import com.springboot.swmlopsbe.domain.user.entity.User;
 import com.springboot.swmlopsbe.domain.user.repository.UserRepository;
@@ -22,6 +24,7 @@ public class MarketingService {
   private final UserRepository userRepository;
   private final PredictionService predictionService;
   private final EmailService emailService;
+  private final AbTestService abTestService;
 
   // 마케팅 이메일 전송하는 함수
   public void executeMarketingCampaign() {
@@ -31,8 +34,14 @@ public class MarketingService {
 
     for (User user : users) {
       try {
-        var result = predictionService.predict(user);
-        if (result.isPersuadable()) { // isPersuadable = true 일떄
+        FeatureRequest features = predictionService.calculateFeatures(user);
+        var result = predictionService.predict(user, features);
+
+        if (result.isChurned()) {
+          abTestService.recordAssignment(user, features, result.isPersuadable());
+        }
+
+        if (result.isPersuadable()) {
           emailService.sendEmail(
               user.getEmail(),
               String.format("🌴 %s님, 여름 특별 세일 혜택을 놓치고 계신 건 아닌가요?", user.getName()),

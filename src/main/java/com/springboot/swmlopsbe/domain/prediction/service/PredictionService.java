@@ -42,9 +42,12 @@ public class PredictionService {
 
   @Transactional
   public PredictionResultResponse predict(User user) {
-    log.info("[예측 요청] userId: {}", user.getId());
+    return predict(user, calculateFeatures(user));
+  }
 
-    FeatureRequest features = calculateFeatures(user);
+  @Transactional
+  public PredictionResultResponse predict(User user, FeatureRequest features) {
+    log.info("[예측 요청] userId: {}", user.getId());
 
     ModelChurnResponse.ChurnResult churnResult = callChurnApi(features);
     log.info(
@@ -82,7 +85,7 @@ public class PredictionService {
     return PredictionResultResponse.from(result);
   }
 
-  private FeatureRequest calculateFeatures(User user) {
+  public FeatureRequest calculateFeatures(User user) {
     LocalDateTime since = LocalDateTime.now().minusDays(WINDOW_DAYS);
 
     long accountAgeMonths = ChronoUnit.MONTHS.between(user.getCreatedAt(), LocalDateTime.now());
