@@ -41,11 +41,9 @@ public class AbTestOutcome {
   @Column(nullable = false)
   private boolean converted = false;
 
-  @Column
-  private LocalDateTime convertedAt;
+  @Column private LocalDateTime convertedAt;
 
-  @Column
-  private LocalDateTime measuredAt;
+  @Column private LocalDateTime measuredAt;
 
   @Builder
   public AbTestOutcome(AbTestAssignment assignment, User user) {

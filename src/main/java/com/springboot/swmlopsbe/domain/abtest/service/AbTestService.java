@@ -48,8 +48,7 @@ public class AbTestService {
 
     outcomeRepository.save(AbTestOutcome.builder().assignment(assignment).user(user).build());
 
-    log.info(
-        "[AB테스트] 배정 완료 - userId: {}, group: {}", user.getId(), groupType);
+    log.info("[AB테스트] 배정 완료 - userId: {}, group: {}", user.getId(), groupType);
   }
 
   @Transactional
