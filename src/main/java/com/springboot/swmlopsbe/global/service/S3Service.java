@@ -51,7 +51,8 @@ public class S3Service {
     if (imageUrl == null || imageUrl.startsWith("https://")) return null;
     if (imageUrl.startsWith("/images/")) {
       String filename = imageUrl.substring("/images/".length());
-      String encodedFilename = URLEncoder.encode(filename, StandardCharsets.UTF_8).replace("+", "%20");
+      String encodedFilename =
+          URLEncoder.encode(filename, StandardCharsets.UTF_8).replace("+", "%20");
       return baseUrl + "/images/" + encodedFilename;
     }
     String encodedKey = URLEncoder.encode(imageUrl, StandardCharsets.UTF_8).replace("+", "%20");

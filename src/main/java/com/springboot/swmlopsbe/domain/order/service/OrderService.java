@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.springboot.swmlopsbe.domain.abtest.service.AbTestService;
 import com.springboot.swmlopsbe.domain.cart.repository.CartItemRepository;
 import com.springboot.swmlopsbe.domain.log.entity.EventType;
 import com.springboot.swmlopsbe.domain.log.service.CustomerLogService;
@@ -37,6 +38,7 @@ public class OrderService {
   private final CartItemRepository cartItemRepository;
   private final CustomerLogService customerLogService;
   private final S3Service s3Service;
+  private final AbTestService abTestService;
 
   @Transactional
   public OrderResponse createOrder(User user, OrderRequest request) {
@@ -79,7 +81,8 @@ public class OrderService {
     }
 
     order.updateTotalPrice(totalPrice);
-    cartItemRepository.deleteByUser(user); // 주문 생성 후에는 장바구니 비우기
+    cartItemRepository.deleteByUser(user);
+    abTestService.recordConversion(user);
     log.info("[주문 생성] 완료 - orderId: {}, totalPrice: {}", order.getId(), totalPrice);
     return OrderResponse.from(order, s3Service::generatePresignedUrl);
   }
