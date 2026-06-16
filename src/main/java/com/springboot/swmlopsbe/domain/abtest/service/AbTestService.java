@@ -9,10 +9,12 @@ import org.springframework.transaction.annotation.Transactional;
 import com.springboot.swmlopsbe.domain.abtest.entity.AbTestAssignment;
 import com.springboot.swmlopsbe.domain.abtest.entity.AbTestOutcome;
 import com.springboot.swmlopsbe.domain.abtest.entity.GroupType;
+import com.springboot.swmlopsbe.domain.abtest.exception.AbTestErrorCode;
 import com.springboot.swmlopsbe.domain.abtest.repository.AbTestAssignmentRepository;
 import com.springboot.swmlopsbe.domain.abtest.repository.AbTestOutcomeRepository;
 import com.springboot.swmlopsbe.domain.prediction.dto.request.FeatureRequest;
 import com.springboot.swmlopsbe.domain.user.entity.User;
+import com.springboot.swmlopsbe.global.exception.CustomException;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -73,5 +75,40 @@ public class AbTestService {
     LocalDateTime now = LocalDateTime.now();
     outcomes.forEach(outcome -> outcome.measure(now));
     log.info("[AB테스트] outcome 확정 완료 - {}건", outcomes.size());
+  }
+
+  @Transactional(readOnly = true)
+  public String exportRetrainingCsv() {
+    List<AbTestOutcome> outcomes = outcomeRepository.findAllConfirmedWithAssignment();
+
+    if (outcomes.isEmpty()) {
+      throw new CustomException(AbTestErrorCode.NO_CONFIRMED_OUTCOME);
+    }
+
+    StringBuilder sb = new StringBuilder();
+    sb.append(
+        "account_age_months,avg_order_value,total_orders,days_since_last_purchase,"
+            + "discount_usage_rate,return_rate,browsing_frequency_per_week,"
+            + "cart_abandonment_rate,treatment,outcome\n");
+
+    for (AbTestOutcome outcome : outcomes) {
+      AbTestAssignment a = outcome.getAssignment();
+      sb.append(
+          String.format(
+              "%d,%.2f,%d,%d,%.4f,%.4f,%.4f,%.4f,%d,%d%n",
+              a.getAccountAgeMonths(),
+              a.getAvgOrderValue(),
+              a.getTotalOrders(),
+              a.getDaysSinceLastPurchase(),
+              a.getDiscountUsageRate(),
+              a.getReturnRate(),
+              a.getBrowsingFrequencyPerWeek(),
+              a.getCartAbandonmentRate(),
+              a.getGroupType() == GroupType.TREATMENT ? 1 : 0,
+              outcome.isConverted() ? 1 : 0));
+    }
+
+    log.info("[재학습 데이터] CSV 추출 완료 - {}건", outcomes.size());
+    return sb.toString();
   }
 }
