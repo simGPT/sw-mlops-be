@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
 
 import com.springboot.swmlopsbe.domain.abtest.entity.AbTestOutcome;
 import com.springboot.swmlopsbe.domain.user.entity.User;
@@ -16,4 +17,8 @@ public interface AbTestOutcomeRepository extends JpaRepository<AbTestOutcome, Lo
 
   // 30일 지났으나 아직 measuredAt 미확정인 outcome (스케줄러용)
   List<AbTestOutcome> findByMeasuredAtIsNullAndAssignment_AssignedAtBefore(LocalDateTime cutoff);
+
+  // outcome 확정 완료된 데이터 전체 (재학습 데이터 추출용)
+  @Query("SELECT o FROM AbTestOutcome o JOIN FETCH o.assignment WHERE o.measuredAt IS NOT NULL")
+  List<AbTestOutcome> findAllConfirmedWithAssignment();
 }
